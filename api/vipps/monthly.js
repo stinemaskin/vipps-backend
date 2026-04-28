@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import fetch from "node-fetch";
 
 const VIPPS_BASE_URL = "https://api.vippsmobilepay.com";
 
@@ -39,7 +40,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { amount } = req.body;
+    const { amount } = req.body || {};
 
     if (!amount) {
       return res.status(400).json({ error: "Mangler beløp" });
@@ -97,4 +98,3 @@ export default async function handler(req, res) {
     });
   }
 }
-fix vipps integration
