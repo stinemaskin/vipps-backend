@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import fetch from "node-fetch";
 
-const VIPPS_BASE_URL = "https://api.vippsmobilepay.com";
+const VIPPS_BASE_URL = "https://api.vipps.no";
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "https://www.rett-fram.no");
