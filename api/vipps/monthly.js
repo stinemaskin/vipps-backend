@@ -49,16 +49,14 @@ export default async function handler(req, res) {
     const accessToken = await getAccessToken();
 
     const payload = {
-      interval: {
-        type: "RECURRING",
-        period: {
-          unit: "MONTH",
-          count: 1
-        }
-      },
       pricing: {
+        type: "LEGACY",
         amount: amount,
         currency: "NOK"
+      },
+      interval: {
+        unit: "MONTH",
+        count: 1
       },
       merchantRedirectUrl: "https://www.rett-fram.no/takk",
       merchantAgreementUrl: "https://www.rett-fram.no",
@@ -76,7 +74,7 @@ export default async function handler(req, res) {
         "Merchant-Serial-Number": process.env.VIPPS_MSN,
         "Idempotency-Key": crypto.randomUUID(),
         "Content-Type": "application/json",
-        "Vipps-System-Name": "rett-fram",
+        "Vipps-System-Name": "rettfram",
         "Vipps-System-Version": "1.0.0",
         "Vipps-System-Plugin-Name": "custom",
         "Vipps-System-Plugin-Version": "1.0.0"
