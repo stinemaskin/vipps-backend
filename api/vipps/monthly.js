@@ -1,10 +1,9 @@
 import crypto from "crypto";
-import fetch from "node-fetch";
 
-const VIPPS_BASE_URL = "https://api.vipps.no";
+const VIPPS_BASE_URL = "[api.vipps.no](https://api.vipps.no)";
 
 function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "https://www.rett-fram.no");
+  res.setHeader("Access-Control-Allow-Origin", "[rett-fram.no](https://www.rett-fram.no)");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
@@ -32,7 +31,9 @@ async function getAccessToken() {
 export default async function handler(req, res) {
   setCors(res);
 
-  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Kun POST er tillatt" });
@@ -48,17 +49,22 @@ export default async function handler(req, res) {
     const accessToken = await getAccessToken();
 
     const payload = {
-      interval: {
-        unit: "MONTH",
-        count: 1
-      },
       pricing: {
+        type: "LEGACY",
         amount: amount,
         currency: "NOK"
       },
-      merchantRedirectUrl: "https://www.rett-fram.no/takk",
-      merchantAgreementUrl: "https://www.rett-fram.no",
+      campaign: {
+        type: "PERIODIC",
+        interval: {
+          unit: "MONTH",
+          count: 1
+        }
+      },
+      merchantRedirectUrl: "[rett-fram.no](https://www.rett-fram.no/takk)",
+      merchantAgreementUrl: "[rett-fram.no](https://www.rett-fram.no)",
       productName: "Månedlig gave til Rett Fram",
+      productDescription: "Fast månedlig gave til Rett Fram",
       scope: "name phoneNumber email",
       externalId: crypto.randomUUID()
     };
@@ -79,7 +85,14 @@ export default async function handler(req, res) {
       body: JSON.stringify(payload)
     });
 
-    const vippsData = await vippsResponse.json();
+    const rawVippsText = await vippsResponse.text();
+
+    let vippsData;
+    try {
+      vippsData = JSON.parse(rawVippsText);
+    } catch {
+      vippsData = { raw: rawVippsText };
+    }
 
     if (!vippsResponse.ok) {
       return res.status(400).json({
@@ -89,8 +102,21 @@ export default async function handler(req, res) {
       });
     }
 
+    const url =
+      vippsData.vippsConfirmationUrl ||
+      vippsData.confirmationUrl ||
+      vippsData.redirectUrl ||
+      vippsData.url;
+
+    if (!url) {
+      return res.status(500).json({
+        error: "Fant ingen Vipps-url i svaret",
+        vippsData
+      });
+    }
+
     return res.status(200).json({
-      url: vippsData.vippsConfirmationUrl,
+      url,
       vippsData
     });
   } catch (error) {
