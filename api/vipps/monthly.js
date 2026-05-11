@@ -15,7 +15,8 @@ async function getAccessToken() {
     headers: {
       client_id: process.env.VIPPS_CLIENT_ID,
       client_secret: process.env.VIPPS_CLIENT_SECRET,
-      "Ocp-Apim-Subscription-Key": process.env.VIPPS_SUBSCRIPTION_KEY
+      "Ocp-Apim-Subscription-Key": process.env.VIPPS_SUBSCRIPTION_KEY,
+      "Merchant-Serial-Number": process.env.VIPPS_MSN
     }
   });
 
@@ -31,9 +32,7 @@ async function getAccessToken() {
 export default async function handler(req, res) {
   setCors(res);
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Kun POST er tillatt" });
@@ -49,21 +48,19 @@ export default async function handler(req, res) {
     const accessToken = await getAccessToken();
 
     const payload = {
-      pricing: {
-        type: "LEGACY",
-        amount: amount,
-        currency: "NOK"
-      },
       interval: {
         unit: "MONTH",
         count: 1
       },
+      pricing: {
+        amount: amount,
+        currency: "NOK"
+      },
       merchantRedirectUrl: "https://www.rett-fram.no/takk",
       merchantAgreementUrl: "https://www.rett-fram.no",
       productName: "Månedlig gave til Rett Fram",
-      productDescription: "Fast månedlig gave til Rett Fram Opplevelser",
-      externalId: crypto.randomUUID(),
-      scope: "name phoneNumber email"
+      scope: "name phoneNumber email",
+      externalId: crypto.randomUUID()
     };
 
     const vippsResponse = await fetch(`${VIPPS_BASE_URL}/recurring/v3/agreements`, {
@@ -87,6 +84,7 @@ export default async function handler(req, res) {
     if (!vippsResponse.ok) {
       return res.status(400).json({
         error: "Vipps-feil",
+        sentPayload: payload,
         details: vippsData
       });
     }
