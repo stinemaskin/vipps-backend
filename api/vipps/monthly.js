@@ -42,24 +42,30 @@ export default async function handler(req, res) {
   try {
     const { amount } = req.body || {};
 
-    if (!amount) {
-      return res.status(400).json({ error: "Mangler beløp" });
+    if (!amount || amount < 1000) {
+      return res.status(400).json({ error: "Ugyldig beløp" });
     }
 
     const accessToken = await getAccessToken();
 
     const payload = {
       interval: {
-        unit: "MONTH",
-        count: 1
+        type: "RECURRING",
+        period: {
+          unit: "MONTH",
+          count: 1
+        }
+      },
+      pricing: {
+        amount: amount,
+        currency: "NOK"
       },
       merchantRedirectUrl: "https://www.rett-fram.no/takk",
       merchantAgreementUrl: "https://www.rett-fram.no",
       productName: "Månedlig gave til Rett Fram",
       productDescription: "Fast månedlig gave til Rett Fram Opplevelser",
-      currency: "NOK",
-      price: amount,
-      externalId: crypto.randomUUID()
+      externalId: crypto.randomUUID(),
+      scope: "name phoneNumber email"
     };
 
     const vippsResponse = await fetch(`${VIPPS_BASE_URL}/recurring/v3/agreements`, {
